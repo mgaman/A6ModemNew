@@ -97,28 +97,22 @@ class A6MQTT
     bool unsubscribe(unsigned int MessageID, char *SubTopic);
     bool disconnect(void);
     bool ping(void);
-    void Parse();
+    void Parse(byte *,unsigned);
     
     void AutoConnect(void);
     void OnConnect(eConnectRC) __attribute__((weak));
-    void OnDisconnect() __attribute__((weak));
     void OnSubscribe(uint16_t)  __attribute__((weak));
     void OnMessage(char *Topic,char *Message,bool,bool,eQOS)   __attribute__((weak));
     void OnPubAck(uint16_t messageid) __attribute__((weak));
     void OnUnsubscribe(uint16_t)  __attribute__((weak));
     A6GPRS *_a6gprs;
   private:
-    enum eParseState {GETMM,GETLENGTH,GETDATA};
-    void mqttparse();
+    void mqttparse(byte[]);
     volatile unsigned long _KeepAliveTimeOut;
-    eParseState ParseState;
-    int modemMessageLength;
-    byte *modemmessage;
     byte *CombinedTopicMessageBuffer;
-    int mqttmsglength;
     bool pubrel(uint16_t);
-	  bool puback(uint16_t);
-	  bool pubcomp(uint16_t);
+	bool puback(uint16_t);
+	bool pubcomp(uint16_t);
     unsigned maxmessagelength;
 };
 #endif /* A6_MQTT_H_ */

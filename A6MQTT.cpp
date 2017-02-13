@@ -28,15 +28,10 @@
 A6MQTT::A6MQTT(A6GPRS& a6gprs,unsigned long KeepAlive,unsigned MaxMessageLength)
 {
   _KeepAliveTimeOut = KeepAlive;
-//  gsm.doParsing = false;  // dont parse until connected to server
-  modemMessageLength = 0;
-  ParseState = GETMM;
   _PingNextMillis = 0xffffffff;
- // connectedToServer = false;  // got ACK & it was  CONNECTION_ACCEPTED
   waitingforConnack = false;  // send connection request and waiting for ACK
   maxmessagelength = MaxMessageLength;
   CombinedTopicMessageBuffer = new byte[maxmessagelength];
-  modemmessage = new byte[maxmessagelength];
   _a6gprs = &a6gprs;
 }
 
@@ -45,7 +40,7 @@ static byte mqttbuffer[MQTT_BUFFER_SIZE];  // build up message here
 static char line[30];
 uint16_t bswap(uint16_t w)
 {
-  return ((w&0xff)*256) + (w/256);
+  return ((w&0xff)<<8) | (w>>8);
 }
 char *Protocolname = "MQTT";
 // Using version 3.1.1  Protocol name MQTT, version 4
@@ -141,73 +136,11 @@ bool A6MQTT::subscribe(unsigned int MessageID, char *SubTopic, eQOS SubQoS)
 }
 
 /*
- *  Serial input is a mixture of modem unsolicited messages e.g. +CGREG: 1, expected messages
- *  suxh as the precursor to data +CIPRCV:n, and data from the broker
- *  We look for complete modem messages & react to +CIPRCV, tgr4ansfer n bytes tp mqtt parser
- *  wait for cr/lf cr , as terminators 
+ * buffer modemmessage contains clientMsgLength bytes
  */
-void A6MQTT::Parse()
+void A6MQTT::Parse(byte *rawData,unsigned length)
 {
-  char c = _a6gprs->pop();
-  while (c != -1)
-  {
-    switch (ParseState)
-    {
-      case GETMM:
-        modemmessage[modemMessageLength++] = c;
-        if (c==0x0a || c== 0x0d || c== ':') // expected delimiter
-        {
-          if (modemMessageLength == strlen("+CIPRCV:") && strncmp(modemmessage,"+CIPRCV:",8) == 0)
-          {
-            ParseState = GETLENGTH;
-            modemMessageLength = 0;
-          }
-          else if (modemMessageLength == strlen("+TCPCLOSED:") && strncmp(modemmessage,"+TCPCLOSED:",11) == 0)
-          {
-            _a6gprs->debugWrite(F("Server closed connection\r\n"));
-            _a6gprs->connectedToServer = false;
-            _a6gprs->stopIP();
-            _a6gprs->getCIPstatus();
-            OnDisconnect();
-          }
-          else
-            modemMessageLength = 0; // just discard      
-        }
-        break;
-      case GETLENGTH:
-        modemmessage[modemMessageLength++] = c;
-        if (c == ',')
-        {
-          modemmessage[modemMessageLength] = 0;
-          mqttmsglength = atoi(modemmessage);
-		  _a6gprs->rxcount += mqttmsglength;
-          modemMessageLength = 0;
-          ParseState = GETDATA;
-        }
-        break;
-      case GETDATA:
-        if (mqttmsglength <= MQTT_BUFFER_SIZE)   // only copy data if there is space
-          modemmessage[modemMessageLength++] = c;
-        else
-          modemMessageLength++;   // else just discard
-        if (modemMessageLength == mqttmsglength)
-        {
-          ParseState = GETMM;
-          modemMessageLength = 0;
-          mqttparse();
-        }
-        break;
-    }
-    c = _a6gprs->pop();
-  }
-}
-
-/*
- * buffer modemmessage contains mqttmsglength bytes
- */
-void A6MQTT::mqttparse()
-{
-  struct sFixedHeader *pFH = (struct sFixedHeader *)modemmessage;
+  struct sFixedHeader *pFH = (struct sFixedHeader *)rawData;
   struct sSubackVariableHeader *pSVH;
   struct sVariableString *pVS;
   int16_t slengtht,slengthm;  // topic and message lengths
@@ -215,7 +148,7 @@ void A6MQTT::mqttparse()
   _a6gprs->debugWrite(F("<<"));
   for (int ii=0;ii<pFH->rl+2;ii++)
   {
-    sprintf(line,"%02X,",modemmessage[ii]);
+    sprintf(line,"%02X,",rawData[ii]);
     _a6gprs->debugWrite(line);
   }
   _a6gprs->debugWrite(F("\r\n"));
@@ -225,19 +158,19 @@ void A6MQTT::mqttparse()
       if (pFH->rl == 2)
       {
         // skip to next part of message
-        struct sConnackVariableHeader *pCAVH = (struct sConnackVariableHeader *)&modemmessage[sizeof(struct sFixedHeader)];
+        struct sConnackVariableHeader *pCAVH = (struct sConnackVariableHeader *)&rawData[sizeof(struct sFixedHeader)];
         _a6gprs->connectedToServer = pCAVH->returncode == CONNECT_RC_ACCEPTED;
         waitingforConnack = false;
         OnConnect(pCAVH->returncode);
       }
       break;
     case MQ_SUBACK:
-      pSVH = (struct sSubackVariableHeader *)&modemmessage[sizeof(struct sFixedHeader)];
+      pSVH = (struct sSubackVariableHeader *)&rawData[sizeof(struct sFixedHeader)];
       _PingNextMillis = millis() + (_KeepAliveTimeOut*1000) - 2000;
       OnSubscribe(bswap(pSVH->packetid));
       break;
     case MQ_PUBLISH:
-      pVS = (struct sVariableString *)&modemmessage[sizeof(struct sFixedHeader)];
+      pVS = (struct sVariableString *)&rawData[sizeof(struct sFixedHeader)];
       slengtht = bswap(pVS->length);
       memcpy(CombinedTopicMessageBuffer,pVS->string,slengtht);  // copy out topic
       CombinedTopicMessageBuffer[slengtht] = 0;  // add end marker
@@ -272,25 +205,25 @@ void A6MQTT::mqttparse()
       _PingNextMillis = millis() + (_KeepAliveTimeOut*1000) - 2000;
       break;
     case MQ_PUBACK:
-      pW = (uint16_t *)&modemmessage[2];
+      pW = (uint16_t *)&rawData[2];
       OnPubAck(bswap(*pW));
       break;
     case MQ_UNSUBACK:
-      pW = (uint16_t *)&modemmessage[2];
+      pW = (uint16_t *)&rawData[2];
       _a6gprs->debugWrite(F("unsuback: "));
       _a6gprs->debugWrite(bswap(*pW));
       _a6gprs->debugWrite(F("\r\n"));
       OnUnsubscribe(bswap(*pW));
       break;
     case MQ_PUBREC:
-      pW = (uint16_t *)&modemmessage[2];
+      pW = (uint16_t *)&rawData[2];
       _a6gprs->debugWrite(F("pubrec: "));
       _a6gprs->debugWrite(bswap(*pW));
       _a6gprs->debugWrite(F("\r\n"));
       pubrel(bswap(*pW));
       break;  
     case MQ_PUBCOMP:  
-      pW = (uint16_t *)&modemmessage[2];
+      pW = (uint16_t *)&rawData[2];
       _a6gprs->debugWrite(F("pubcomp: "));
       _a6gprs->debugWrite(bswap(*pW));
       _a6gprs->debugWrite(F("\r\n"));

@@ -7,7 +7,8 @@ class A6GPRS: public virtual A6GPRSDevice
   public:
     enum eCIPstatus {IP_INITIAL,IP_START,IP_CONFIG,IP_IND,IP_GPRSACT,IP_STATUS,TCPUDP_CONNECTING,IP_CLOSE,CONNECT_OK,IP_STATUS_UNKNOWN };
     enum ePSstate { DETACHED,ATTACHED,PS_UNKNOWN };
-    A6GPRS(Stream &comm,unsigned); // constructor uartstream & buffer size
+//	enum eTcpClientType {MQTT_CLIENT,HTTP_CLIENT};
+    A6GPRS(Stream &comm,unsigned,unsigned); // constructor uartstream, circular buffer size, max message size
     ~A6GPRS(); // destructor
     bool getIMEI(char[]);
     bool getCIMI(char[]);
@@ -27,9 +28,15 @@ class A6GPRS: public virtual A6GPRSDevice
     bool sendToServer(char[],int);  // for ascii strings
     bool sendToServer(byte[],int);  // for byte arrays
 	bool connectedToServer;
+	byte *Parse(unsigned *);
   private:
     eCIPstatus CIPstatus;
-  //  int cid;  // only 1 per instance of class
+	unsigned maxMessageLength;
+    unsigned modemMessageLength;
+    byte *modemmessage;
+    enum eParseState {GETMM,GETLENGTH,GETDATA};
+    eParseState ParseState;
+	unsigned clientMsgLength;
 };
 
 extern A6GPRS gsm;  // instance

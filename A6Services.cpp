@@ -2,14 +2,16 @@
 #include "A6Services.h"
 #include <ctype.h>
 
-//extern A6GPRS gsm;
-A6GPRS::A6GPRS(Stream &comm,unsigned cbs){
+A6GPRS::A6GPRS(Stream &comm,unsigned cbs,unsigned maxmessagelength){
   comm_buf = new char[cbs];
   commbuffsize = cbs;
- // cid = 1;
   CIPstatus = IP_STATUS_UNKNOWN;
   _comms = &comm;
   connectedToServer = false;
+  modemMessageLength = 0;
+  modemmessage = new byte[maxmessagelength];
+  maxMessageLength = maxmessagelength;
+  ParseState = GETMM;
 };
 A6GPRS::~A6GPRS(){};
 
@@ -255,6 +257,72 @@ bool A6GPRS::sendToServer(byte msg[],int length)
       waitresp("OK\r\n",1000);
       rc = true;
     }
+  }
+  return rc;
+}
+
+/*
+ *  Serial input is a mixture of modem unsolicited messages e.g. +CGREG: 1, expected
+ *  messages such as the precursor to data +CIPRCV:n, and data from the server
+ *  We look for complete modem messages & react to +CIPRCV, transfer n bytes
+ *  to the registered client parser
+ *  wait for cr/lf cr , as terminators 
+ */
+byte *A6GPRS::Parse(unsigned *length)
+{
+  byte *rc = 0;
+  *length = 0;
+  char c = pop();
+  while (c != -1)
+  {
+    switch (ParseState)
+    {
+      case GETMM:
+        modemmessage[modemMessageLength++] = c;
+        if (c==0x0a || c== 0x0d || c== ':') // expected delimiter
+        {
+          if (modemMessageLength == strlen("+CIPRCV:") && strncmp(modemmessage,"+CIPRCV:",8) == 0)
+          {
+            ParseState = GETLENGTH;
+            modemMessageLength = 0;
+          }
+          else if (modemMessageLength == strlen("+TCPCLOSED:") && strncmp(modemmessage,"+TCPCLOSED:",11) == 0)
+          {
+            debugWrite(F("Server closed connection\r\n"));
+            connectedToServer = false;
+            stopIP();
+            getCIPstatus();
+          }
+          else
+            modemMessageLength = 0; // just discard      
+        }
+        break;
+      case GETLENGTH:
+        modemmessage[modemMessageLength++] = c;
+        if (c == ',')
+        {
+          modemmessage[modemMessageLength] = 0;
+          clientMsgLength = atoi(modemmessage);
+		  rxcount += clientMsgLength;
+          modemMessageLength = 0;
+          ParseState = GETDATA;
+        }
+        break;
+      case GETDATA:
+        if (clientMsgLength <= maxMessageLength)   // only copy data if there is space
+          modemmessage[modemMessageLength++] = c;
+        else
+          modemMessageLength++;   // else just discard
+        if (modemMessageLength == clientMsgLength)
+        {
+          ParseState = GETMM;
+          modemMessageLength = 0;
+		  rc = modemmessage;
+		  *length = clientMsgLength;
+        }
+        break;
+    }
+    c = pop();
   }
   return rc;
 }
