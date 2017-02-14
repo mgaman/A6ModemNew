@@ -270,7 +270,7 @@ bool A6GPRS::sendToServer(byte msg[],int length)
  */
 byte *A6GPRS::Parse(unsigned *length)
 {
-  byte *rc = 0;
+  byte *mm = 0;
   *length = 0;
   char c = pop();
   while (c != -1)
@@ -292,6 +292,11 @@ byte *A6GPRS::Parse(unsigned *length)
             connectedToServer = false;
             stopIP();
             getCIPstatus();
+          }
+          else if (modemMessageLength == strlen("+CIEV:") &&
+		  (strncmp(modemmessage,"+CIEV:",6) == 0 || strncmp(modemmessage,"+CLIP:",6) == 0)) //+CIEV or +CLIP
+          {
+			  ParseState = GETTELEVENT;
           }
           else
             modemMessageLength = 0; // just discard      
@@ -317,12 +322,23 @@ byte *A6GPRS::Parse(unsigned *length)
         {
           ParseState = GETMM;
           modemMessageLength = 0;
-		  rc = modemmessage;
+		  mm = modemmessage;
 		  *length = clientMsgLength;
         }
         break;
+	  case GETTELEVENT:
+	    // carry until cr or lf
+        modemmessage[modemMessageLength++] = c;
+		if (c == 0x0a || c == 0x0d)
+		{
+			ParseState = GETMM;
+			*length = modemMessageLength;
+			modemMessageLength = 0;
+			mm = modemmessage;
+		}
+		break;
     }
     c = pop();
   }
-  return rc;
+  return mm;
 }
