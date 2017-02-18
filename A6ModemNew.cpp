@@ -23,6 +23,11 @@ bool A6GPRSDevice::begin()
   {
     _comms->print(F("ATE0\r"));
     rc = waitresp("OK\r\n",1000);
+	if (rc)
+	{
+		_comms->print(F("AT+CMGF=1\r")); // SMS text mode
+		rc = waitresp("OK\r\n",1000);		
+	}
   }
   return rc;
 }

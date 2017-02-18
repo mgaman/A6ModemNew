@@ -7,8 +7,8 @@
 class A6CALL
 {
 	public:
-		enum ephoneEvent {SOUNDER,CALL};
-		enum ecallState {IDLE,RINGING,SPEAKING};
+		enum ephoneEvent {SOUNDER,CALL,SMS_ARRIVED};
+		enum ecallState {IDLE,CALLER_RINGING,SPEAKING,DIALLING_OUT,CALLERID};
 		A6CALL(A6GPRS& a6gprs);
 		~A6CALL();
 		bool dial(char[]);
@@ -22,6 +22,9 @@ class A6CALL
 		bool sendDTMF(char,unsigned);
 		bool sendDTMF(char);
 		enum ecallState callState;
+		char smsbuffer[160];
+		char smsSender[20];
 	private:
 		A6GPRS *_a6gprs;
+		bool nextLineSMS;
 };

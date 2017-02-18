@@ -279,27 +279,26 @@ byte *A6GPRS::Parse(unsigned *length)
     {
       case GETMM:
         modemmessage[modemMessageLength++] = c;
-        if (c==0x0a || c== 0x0d || c== ':') // expected delimiter
+		// first check if we got an unsolicited message
+		if (c == 0x0a || c == 0x0d)
+		{
+			*length = modemMessageLength;
+			modemmessage[modemMessageLength]=0; // end marker
+			mm = modemmessage;
+			modemMessageLength = 0;
+		}
+		// then check if there is data coming in from an TCP connection
+        else if (modemMessageLength == strlen("+CIPRCV:") && strncmp(modemmessage,"+CIPRCV:",8) == 0)
         {
-          if (modemMessageLength == strlen("+CIPRCV:") && strncmp(modemmessage,"+CIPRCV:",8) == 0)
-          {
             ParseState = GETLENGTH;
             modemMessageLength = 0;
-          }
-          else if (modemMessageLength == strlen("+TCPCLOSED:") && strncmp(modemmessage,"+TCPCLOSED:",11) == 0)
-          {
+        }
+        else if (modemMessageLength == strlen("+TCPCLOSED:") && strncmp(modemmessage,"+TCPCLOSED:",11) == 0)
+        {
             debugWrite(F("Server closed connection\r\n"));
             connectedToServer = false;
             stopIP();
             getCIPstatus();
-          }
-          else if (modemMessageLength == strlen("+CIEV:") &&
-		  (strncmp(modemmessage,"+CIEV:",6) == 0 || strncmp(modemmessage,"+CLIP:",6) == 0)) //+CIEV or +CLIP
-          {
-			  ParseState = GETTELEVENT;
-          }
-          else
-            modemMessageLength = 0; // just discard      
         }
         break;
       case GETLENGTH:
@@ -326,17 +325,6 @@ byte *A6GPRS::Parse(unsigned *length)
 		  *length = clientMsgLength;
         }
         break;
-	  case GETTELEVENT:
-	    // carry until cr or lf
-        modemmessage[modemMessageLength++] = c;
-		if (c == 0x0a || c == 0x0d)
-		{
-			ParseState = GETMM;
-			*length = modemMessageLength;
-			modemMessageLength = 0;
-			mm = modemmessage;
-		}
-		break;
     }
     c = pop();
   }

@@ -31,7 +31,7 @@ class A6GPRS: public virtual A6GPRSDevice
   private:
     eCIPstatus CIPstatus;
 	unsigned maxMessageLength;
-    unsigned modemMessageLength;
+    volatile unsigned modemMessageLength;
     byte *modemmessage;
     enum eParseState {GETMM,GETLENGTH,GETDATA,GETTELEVENT};
     eParseState ParseState;
