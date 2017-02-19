@@ -24,6 +24,7 @@ class A6CALL
 		enum ecallState callState;
 		char smsbuffer[160];
 		char smsSender[20];
+		bool sendSMS(char [],char []);
 	private:
 		A6GPRS *_a6gprs;
 		bool nextLineSMS;

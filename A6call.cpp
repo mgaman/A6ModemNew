@@ -127,3 +127,13 @@ bool A6CALL::sendDTMF(char c)
 {
 	return sendDTMF(c,1);
 }
+
+bool A6CALL::sendSMS(char addr[],char text[])
+{
+	sprintf(printbuff,"AT+CMGS=\"%s\"\r",addr);	
+	_a6gprs->modemPrint(printbuff);
+	_a6gprs->waitresp(">",1000);	
+	_a6gprs->modemPrint(text);
+	_a6gprs->modemWrite(0x1a);
+	return _a6gprs->waitresp("+CMGS:",5000);
+}
