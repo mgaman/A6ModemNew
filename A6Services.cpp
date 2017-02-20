@@ -12,6 +12,7 @@ A6GPRS::A6GPRS(Stream &comm,unsigned cbs,unsigned maxmessagelength){
   modemmessage = new byte[maxmessagelength];
   maxMessageLength = maxmessagelength;
   ParseState = GETMM;
+ // ignoreData = false;
 };
 A6GPRS::~A6GPRS(){};
 
@@ -182,6 +183,10 @@ bool A6GPRS::getLocalIP(char ip[])
 bool A6GPRS::connectTCPserver(char*path,int port)
 {
   bool rc = false;
+  debugWrite(path);
+  debugWrite("\r\n");
+  debugWrite(port);
+  debugWrite("\r\n");
   CIPstatus = getCIPstatus();
   if (CIPstatus == IP_CLOSE || CIPstatus == IP_GPRSACT)
   {
@@ -288,12 +293,13 @@ byte *A6GPRS::Parse(unsigned *length)
 			modemMessageLength = 0;
 		}
 		// then check if there is data coming in from an TCP connection
-        else if (modemMessageLength == strlen("+CIPRCV:") && strncmp(modemmessage,"+CIPRCV:",8) == 0)
+        else if (modemMessageLength == 8 && strncmp(modemmessage,"+CIPRCV:",8) == 0)
         {
             ParseState = GETLENGTH;
+		//	Serial.println("start tcp data");
             modemMessageLength = 0;
         }
-        else if (modemMessageLength == strlen("+TCPCLOSED:") && strncmp(modemmessage,"+TCPCLOSED:",11) == 0)
+        else if (modemMessageLength == 11 && strncmp(modemmessage,"+TCPCLOSED:",11) == 0)
         {
             debugWrite(F("Server closed connection\r\n"));
             connectedToServer = false;
@@ -307,6 +313,7 @@ byte *A6GPRS::Parse(unsigned *length)
         {
           modemmessage[modemMessageLength] = 0;
           clientMsgLength = atoi(modemmessage);
+		//  ignoreData = clientMsgLength > maxMessageLength;
 		  rxcount += clientMsgLength;
           modemMessageLength = 0;
           ParseState = GETDATA;
@@ -322,7 +329,13 @@ byte *A6GPRS::Parse(unsigned *length)
           ParseState = GETMM;
           modemMessageLength = 0;
 		  mm = modemmessage;
-		  *length = clientMsgLength;
+		  if (clientMsgLength > maxMessageLength)
+		  {
+			  onException(BUFFER_OVERFLOW);
+			  *length = maxMessageLength;
+		  }
+		  else
+			  *length = clientMsgLength;
         }
         break;
     }
