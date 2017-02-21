@@ -42,10 +42,12 @@ A6GPRSDevice::~A6GPRSDevice(){
 
 void A6GPRSDevice::push(char c)
 {
-//  debugWrite(c);
   comm_buf[inlevel++] = c;
   if (inlevel == commbuffsize)  // handle wrap around
+  {
     inlevel = 0;
+	onException(CIRC_BUFFER_OVERFLOW,0);
+  }
 }
 
 char A6GPRSDevice::pop()

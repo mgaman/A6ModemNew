@@ -7,7 +7,6 @@ class A6GPRS: public virtual A6GPRSDevice
   public:
     enum eCIPstatus {IP_INITIAL,IP_START,IP_CONFIG,IP_IND,IP_GPRSACT,IP_STATUS,TCPUDP_CONNECTING,IP_CLOSE,CONNECT_OK,IP_STATUS_UNKNOWN };
     enum ePSstate { DETACHED,ATTACHED,PS_UNKNOWN };
-	enum eExceptions {BUFFER_OVERFLOW};
     A6GPRS(Stream &comm,unsigned,unsigned); // constructor uartstream, circular buffer size, max message size
     ~A6GPRS(); // destructor
     bool getIMEI(char[]);
@@ -24,12 +23,12 @@ class A6GPRS: public virtual A6GPRSDevice
     bool stopIP();
     bool getLocalIP(char []);
     bool connectTCPserver(char*,int);
-    bool sendToServer(char[]);
-    bool sendToServer(char[],int);  // for ascii strings
+    bool sendToServer(char[]); // single C string
+    bool sendToServer(char*[],unsigned); // array of C strings
+    bool sendToServer(char[],int);  // for ascii strings, no delimiter
     bool sendToServer(byte[],int);  // for byte arrays
 	bool connectedToServer;
 	byte *Parse(unsigned *);
-	void onException(eExceptions) __attribute__((weak));
   private:
     eCIPstatus CIPstatus;
 	unsigned maxMessageLength;
@@ -38,7 +37,6 @@ class A6GPRS: public virtual A6GPRSDevice
     enum eParseState {GETMM,GETLENGTH,GETDATA,GETTELEVENT};
     eParseState ParseState;
 	unsigned clientMsgLength;
-	//bool ignoreData;
 };
 
 extern A6GPRS gsm;  // instance

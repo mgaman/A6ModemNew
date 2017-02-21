@@ -2,7 +2,6 @@
 #include "A6Services.h"
 #include "A6Call.h"
 
-static char printbuff[120];
 A6CALL::A6CALL(A6GPRS& a6gprs)
 {
 	_a6gprs = &a6gprs;
@@ -40,14 +39,8 @@ void A6CALL::Parse(byte buffer[],unsigned length)
 {
 	int parm;
 	char *start;
-//	Serial.println((char *)buffer);
 	if (length == 1)
 		return;	// single trailing LF
-#if 0
-	Serial.print("Parsing ");
-	buffer[length] = 0; // add terminator
-	Serial.println((char *)buffer);
-#endif
 	if (strncmp(buffer,"RING",4) == 0)
 		callState = CALLER_RINGING;
 	else if (strncmp(buffer,"+CIEV:",6) == 0)
@@ -83,7 +76,6 @@ void A6CALL::Parse(byte buffer[],unsigned length)
 			char *end = strchr(start,'"');	// point to end of number
 			if (end)
 				*end = 0;
-		//	Serial.println(start);
 			callState = CALLERID;
 			OnDialin(start);
 		}
@@ -111,15 +103,19 @@ void A6CALL::Parse(byte buffer[],unsigned length)
 
 bool A6CALL::clip(bool enable)
 {
-	sprintf(printbuff,"AT+CLIP=%d\r",enable);	
-	_a6gprs->modemPrint(printbuff);
+	// avoid sprintf
+	_a6gprs->modemPrint("AT+CLIP=");
+	_a6gprs->modemPrint(enable);
+	_a6gprs->modemPrint("\r");
 	return _a6gprs->waitresp("OK",1000);	
 }
 bool A6CALL::sendDTMF(char c,unsigned t)
 {
-	sprintf(printbuff,"AT+VTS=%c,%u\r",c,t);
-	_a6gprs->debugWrite(printbuff);
-	_a6gprs->modemPrint(printbuff);
+	_a6gprs->modemPrint("AT+VTS=");
+	_a6gprs->modemWrite(c);
+	_a6gprs->modemPrint(",");
+	_a6gprs->modemPrint(t);
+	_a6gprs->modemPrint("\r");
 	return _a6gprs->waitresp("OK",1000);
 }
 
@@ -130,8 +126,9 @@ bool A6CALL::sendDTMF(char c)
 
 bool A6CALL::sendSMS(char addr[],char text[])
 {
-	sprintf(printbuff,"AT+CMGS=\"%s\"\r",addr);	
-	_a6gprs->modemPrint(printbuff);
+	_a6gprs->modemPrint("AT+CMGS=\"");
+	_a6gprs->modemPrint(addr);
+	_a6gprs->modemPrint("\"\r");
 	_a6gprs->waitresp(">",1000);	
 	_a6gprs->modemPrint(text);
 	_a6gprs->modemWrite(0x1a);

@@ -283,8 +283,6 @@ bool A6MQTT::publish(char *Topic, char *Message, bool dup , bool retain ,eQOS qo
     pW = (uint16_t *)(pVS->string + strlen(Topic));  // point to where messageid will go (if needed)
     if (qos != QOS_0)  // packetid after topic if qos 1 or 2
     {
- //     sprintf(line,"\r\nPI %x %x\r\n",packetid,bswap(packetid));
- //     gsm.debugWrite(line);
       *pW++ = bswap(packetid);  // if messageid written, increment pointer
     }
     // copy message after messageid which may or may not have been written 

@@ -220,6 +220,31 @@ bool A6GPRS::sendToServer(char msg[])
   }
   return rc;
 }
+
+bool A6GPRS::sendToServer(char *msgs[],unsigned num)
+{
+  bool rc = false;
+  getCIPstatus();
+  if (CIPstatus == CONNECT_OK)
+  {
+    modemPrint(F("AT+CIPSEND\r"));
+    if (waitresp(">",100))
+    {
+	  for (int i=0;i<num;i++)
+	  {
+		modemPrint(msgs[i]);
+//		debugWrite(msgs[i]);
+        txcount += strlen(msgs[i]);
+	  }
+      modemWrite(0x1a);
+	  txcount++;
+      waitresp("OK\r\n",1000);
+      rc = true;
+    }
+  }
+  return rc;
+}
+
 bool A6GPRS::sendToServer(char msg[],int length)
 {
   bool rc = false;
@@ -296,7 +321,7 @@ byte *A6GPRS::Parse(unsigned *length)
         else if (modemMessageLength == 8 && strncmp(modemmessage,"+CIPRCV:",8) == 0)
         {
             ParseState = GETLENGTH;
-		//	Serial.println("start tcp data");
+
             modemMessageLength = 0;
         }
         else if (modemMessageLength == 11 && strncmp(modemmessage,"+TCPCLOSED:",11) == 0)
@@ -331,7 +356,7 @@ byte *A6GPRS::Parse(unsigned *length)
 		  mm = modemmessage;
 		  if (clientMsgLength > maxMessageLength)
 		  {
-			  onException(BUFFER_OVERFLOW);
+			  onException(BUFFER_OVERFLOW,clientMsgLength);
 			  *length = maxMessageLength;
 		  }
 		  else

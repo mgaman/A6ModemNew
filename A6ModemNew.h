@@ -7,6 +7,7 @@
 class A6GPRSDevice
 {
   public:
+	enum eExceptions {BUFFER_OVERFLOW,URL_TOO_LONG,CIRC_BUFFER_OVERFLOW};
     A6GPRSDevice();
     ~A6GPRSDevice();
     virtual bool begin();
@@ -32,6 +33,7 @@ class A6GPRSDevice
     unsigned commbuffsize;
     int inlevel, outlevel;        // data in comm_buf
     Stream *_comms;
+	void onException(eExceptions,int) __attribute__((weak));
   private:
 };
 #endif
