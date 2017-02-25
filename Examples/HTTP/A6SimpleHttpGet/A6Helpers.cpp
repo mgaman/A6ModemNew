@@ -24,7 +24,8 @@ void A6GPRSDevice::HWReset()
   digitalWrite(TRANSISTOR_CONTROL,LOW);
   digitalWrite(TRANSISTOR_CONTROL,HIGH);
   delay(A6_RESET_TIME);
-  digitalWrite(TRANSISTOR_CONTROL,LOW);  
+  digitalWrite(TRANSISTOR_CONTROL,LOW); 
+  Serial.println("reset"); 
 }
 
 void A6GPRSDevice::debugWrite(uint16_t c)
@@ -53,18 +54,25 @@ void A6GPRSDevice::debugWrite(const __FlashStringHelper*s)
     Serial.print(s);  
 }
 
-void A6GPRS::onException(eExceptions ex)
+void A6GPRSDevice::onException(eExceptions ex,int other)
 {
   switch(ex)
   {
     case BUFFER_OVERFLOW:
-      Serial.println("buffer overflow");
+      Serial.print("buffer overflow ");Serial.println(other);
       break;
+    case URL_TOO_LONG:
+      Serial.print("URL overflow ");Serial.println(other);
+      break; 
+    case CIRC_BUFFER_OVERFLOW:   
+      Serial.print("Circ. overflow ");Serial.println(other);
+      break; 
     default:
-      Serial.println("Unknown exception");
+      Serial.print("Unknown exception ");Serial.println(other);
       break;
   }
 }
+
 
 void serialEvent1() {
   while (Serial1.available())

@@ -109,7 +109,7 @@ bool A6GPRS::startIP(char apn[],char user[],char pwd[])  // apn, username, passw
   {
     RXFlush();
     sprintf(tempbuf,"AT+CGDCONT=1,\"IP\",\"%s\"\r",apn);
-    debugWrite(tempbuf);
+ //   debugWrite(tempbuf);
     modemPrint(tempbuf);
     if (waitresp("OK\r\n",1000))
     {
@@ -175,23 +175,30 @@ bool A6GPRS::setPSstate(A6GPRS::ePSstate eps)
 bool A6GPRS::getLocalIP(char ip[])
 {
   bool rc = false;
+  int count = 5;
   RXFlush();
-  modemPrint(F("AT+CIFSR\r"));
-  GetLineWithPrefix(NULL,ip,20,2000);
-  return waitresp("OK\r\n",2000);
+  ip[0] = 0;
+  modemPrint("AT+CIFSR\r");
+  // skip empty lines
+  while (count-- && !isdigit(ip[0]))
+	  GetLineWithPrefix(NULL,ip,20,2000);
+  if (count == 0)
+	  return rc;
+  else
+	return waitresp("OK\r\n",2000);
 }
 bool A6GPRS::connectTCPserver(char*path,int port)
 {
   bool rc = false;
-  debugWrite(path);
-  debugWrite("\r\n");
-  debugWrite(port);
-  debugWrite("\r\n");
+//  debugWrite(path);
+//  debugWrite("\r\n");
+//  debugWrite(port);
+//  debugWrite("\r\n");
   CIPstatus = getCIPstatus();
   if (CIPstatus == IP_CLOSE || CIPstatus == IP_GPRSACT)
   {
     sprintf(tempbuf,"AT+CIPSTART=\"TCP\",\"%s\",%d\r",path,port);
-    debugWrite(tempbuf);
+ //   debugWrite(tempbuf);
     modemPrint(tempbuf);
     if (waitresp("CONNECT OK",10000))
     {
@@ -233,7 +240,6 @@ bool A6GPRS::sendToServer(char *msgs[],unsigned num)
 	  for (int i=0;i<num;i++)
 	  {
 		modemPrint(msgs[i]);
-//		debugWrite(msgs[i]);
         txcount += strlen(msgs[i]);
 	  }
       modemWrite(0x1a);

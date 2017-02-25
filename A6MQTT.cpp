@@ -1,24 +1,4 @@
 /*
-  MQTT.h - Library for GSM MQTT Client.
-  Created by Nithin K. Kurian, Dhanish Vijayan, Elementz Engineers Guild Pvt. Ltd, July 2, 2016.
-  Released into the public domain.
-*/
-/*
- *   add Reset function -- see begin()
- *   print tcpstatus correctly
- *   Get APN from main program
- *   Replace all Serial by HW_SERIAL
- *   Set HW serial via macro #define HW_SERIAL Serial1  etc
- *   Replace all serialEvent by SERIALEVENT
- *   Set hw serial event via macro #define SERIALEVENT serialEvent1 etc
- *   
- *   change MQTT_PORT to int
- *   Add USERID, PASSWORD
- *   Replace printMessageType and printConnectAck by printConstString
- *   Bugfix replace 200 by UART_BUFFER_LENGTH in SERIALEVENT
- *   
- *   Changed all mySerial.print to new method DebugPrint. Now user must implement
- *   DebugPrint as he sees fit
  */
 #include "Arduino.h"
 #include "A6Services.h"

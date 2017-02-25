@@ -1,49 +1,45 @@
 #include <Arduino.h>
 #include "A6Services.h"
 #include "A6http.h"
-//static char temp[200];
-A6HTTP::A6HTTP(A6GPRS& a6gprs,unsigned maxurllength)
+A6HTTP::A6HTTP(A6GPRS& a6gprs)
 {
   _a6gprs = &a6gprs;
-  maxUrlLength = maxurllength;
-  urlbuffer = new char[maxUrlLength];
-}
-/*
-	Split url into host and payload parts
-*/
-bool A6HTTP::get(char url[])
-{
-	// copy URL server name up to first slash
-	char *cp = url;
-	unsigned limit = strlen(url);
-	unsigned urloffset = 0;
-	while (*cp != '/' && urloffset != limit)
-		urlbuffer[urloffset++] = *cp++;
-	urlbuffer[urloffset++] = 0;  // end servername
-	unsigned serverlength = strlen(urlbuffer);
-	unsigned parmlength = strlen(&url[serverlength]);
-	if (parmlength == 0)
-		strcpy(&urlbuffer[serverlength+1],"/");
-	else
-		strcpy(&urlbuffer[serverlength+1],&url[serverlength]);
-	if ((serverlength+parmlength+2) > maxUrlLength)  // too long to encode
-	{
-		_a6gprs->onException(A6GPRS::URL_TOO_LONG,serverlength+parmlength);
-		return false;
-	}
-	else
-	{
-		// avoid sprintf if possible, send as an array of strings
-		char *strings[5];	// send in 5 parts
-		strings[0] = "GET ";
-		strings[1] = &urlbuffer[serverlength+1];
-		strings[2] = " HTTP/1.1\r\nHost: ";
-		strings[3] = urlbuffer;
-		strings[4] = "\r\n\r\n";
-		return gsm.sendToServer(strings,5);		
-	}
 }
 
+bool A6HTTP::get(char server[], char path[])
+{
+	// avoid sprintf if possible, send as an array of strings
+	char *strings[5];	// send in 5 parts
+	strings[0] = "GET ";
+	strings[1] = path;
+	strings[2] = " HTTP/1.1\r\nUser-Agent Arduino\r\nAccept: text/plain\r\nHost: ";
+	strings[3] = server;
+	strings[4] = "\r\n\r\n";
+	return gsm.sendToServer(strings,5);		
+}
+
+bool A6HTTP::get(char server[])
+{
+	return get(server,"/");
+}
+
+bool  A6HTTP::post(char server[],char path[],char parms[])
+{
+	char *strings[8];	// send in 5 parts
+	char buff[8];
+	sprintf(buff,"%u",strlen(parms));
+	strings[0] = "POST ";
+	strings[1] = path;
+	strings[2] = " HTTP/1.1\r\nUser-Agent Arduino\r\nAccept: text/plain\r\nHost: ";
+	strings[3] = server;
+	strings[4] = "\r\nContent-Length: ";
+	strings[5] = buff;
+	strings[6] = "\r\n\r\n";
+	strings[7] = parms;
+	
+	return gsm.sendToServer(strings,8);		
+	
+}
 void A6HTTP::Parse(byte *rawData,unsigned length)
 {
 	if (length == 1)
