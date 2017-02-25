@@ -13,6 +13,8 @@ A6GPRS::A6GPRS(Stream &comm,unsigned cbs,unsigned maxmessagelength){
   maxMessageLength = maxmessagelength;
   ParseState = GETMM;
  // ignoreData = false;
+  callState = IDLE;
+  nextLineSMS = false;
 };
 A6GPRS::~A6GPRS(){};
 
@@ -178,7 +180,7 @@ bool A6GPRS::getLocalIP(char ip[])
   int count = 5;
   RXFlush();
   ip[0] = 0;
-  modemPrint("AT+CIFSR\r");
+  modemPrint(F("AT+CIFSR\r"));
   // skip empty lines
   while (count-- && !isdigit(ip[0]))
 	  GetLineWithPrefix(NULL,ip,20,2000);
@@ -373,4 +375,63 @@ byte *A6GPRS::Parse(unsigned *length)
     c = pop();
   }
   return mm;
+}
+
+bool A6GPRS::dial(char number[])
+{
+	bool rc = false;
+	modemPrint(F("ATD"));
+	modemPrint(number);
+	modemPrint(F("\r"));
+	if (waitresp("OK",1000))
+	{
+		callState = DIALLING_OUT;
+		rc = true;
+	}
+	return rc;
+}
+bool A6GPRS::answer()
+{
+	modemPrint(F("ATA\r"));
+	callState = SPEAKING;
+	return waitresp("OK",1000);
+}
+bool A6GPRS::hangup()
+{
+	modemPrint(F("ATH\r"));
+	callState = IDLE;
+	return waitresp("OK",1000);
+}
+bool A6GPRS::clip(bool enable)
+{
+	// avoid sprintf
+	modemPrint(F("AT+CLIP="));
+	modemPrint(enable);
+	modemPrint(F("\r"));
+	return waitresp("OK",1000);	
+}
+bool A6GPRS::sendDTMF(char c,unsigned t)
+{
+	modemPrint(F("AT+VTS="));
+	modemWrite(c);
+	modemPrint(F(","));
+	modemPrint(t);
+	modemPrint(F("\r"));
+	return waitresp("OK",1000);
+}
+
+bool A6GPRS::sendDTMF(char c)
+{
+	return sendDTMF(c,1);
+}
+
+bool A6GPRS::sendSMS(char addr[],char text[])
+{
+	modemPrint(F("AT+CMGS=\""));
+	modemPrint(addr);
+	modemPrint(F("\"\r"));
+	waitresp(">",1000);	
+	modemPrint(text);
+	modemWrite(0x1a);
+	return waitresp("+CMGS:",5000);
 }

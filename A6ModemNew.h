@@ -12,7 +12,7 @@ class A6GPRSDevice
     ~A6GPRSDevice();
     virtual bool begin();
     void modemWrite(byte);
-    bool waitresp(char const *response_string,int32_t timeout);
+    bool waitresp(char const *response_string,int32_t);
     bool GetLineWithPrefix(char const *px,char *outbuf, int l,int32_t timeout);
     // weak methods are helpers - implement only if you really want them
     void HWReset() __attribute__((weak));   // may be implemented by the caller 
