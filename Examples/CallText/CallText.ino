@@ -15,7 +15,7 @@ void setup() {
   if (gsm.begin())
   {
     Serial.println("gsm up");
-    if (call.clip(true))
+    if (gsm.clip(true))
       Serial.println("CLIP enabled");
   }
   else
@@ -31,19 +31,19 @@ void loop() {
     {
       case 'd':
         sprintf(tempbuf,"Dialling %s %s",DIALOUT,
-        call.dial(DIALOUT) ? "succeeded" : "failed");
+        gsm.dial(DIALOUT) ? "succeeded" : "failed");
         Serial.println(tempbuf);
         break;
       case 'a': 
-        sprintf(tempbuf,"Answer %s",call.answer() ? "succeeded" : "failed");
+        sprintf(tempbuf,"Answer %s",gsm.answer() ? "succeeded" : "failed");
         Serial.println(tempbuf);
         break;
       case 'h': 
-        sprintf(tempbuf,"Hangup %s",call.hangup() ? "succeeded" : "failed");
+        sprintf(tempbuf,"Hangup %s",gsm.hangup() ? "succeeded" : "failed");
         Serial.println(tempbuf);
         break;
       case 'f': 
-        sprintf(tempbuf,"dtmf %s",call.sendDTMF('#',5) ? "succeeded" : "failed");
+        sprintf(tempbuf,"dtmf %s",gsm.sendDTMF('#',5) ? "succeeded" : "failed");
         Serial.println(tempbuf);
         break;      
       case '?':
@@ -54,7 +54,7 @@ void loop() {
          break;
       case 's':
         Serial.print("SMS send ");
-        Serial.println(call.sendSMS(DIALOUT,"hello world") ? "success" : "fail");
+        Serial.println(gsm.sendSMS(DIALOUT,"hello world") ? "success" : "fail");
         break;
     }
   }
