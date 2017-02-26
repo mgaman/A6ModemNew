@@ -55,8 +55,3 @@ void A6GPRSDevice::debugWrite(const __FlashStringHelper*s)
     DEBUG_SERIAL.print(s);  
 }
 
-void serialEvent1() {
-  while (Serial1.available())
-    gsm.push((char)Serial1.read());
-}
-

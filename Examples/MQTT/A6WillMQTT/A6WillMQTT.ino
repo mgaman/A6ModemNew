@@ -16,6 +16,8 @@ A6GPRS gsm(Serial1,500,200);    // allocate 500 byte circular buffer, largest me
 #define KEEP_ALIVE_TIME 30
 #define MAX_MQTT_MESSAGE_LENGTH  100
 A6MQTT MQTT(gsm,KEEP_ALIVE_TIME,MAX_MQTT_MESSAGE_LENGTH);
+#define BROKER_ADDRESS "test.mosquitto.org"  // public broker
+#define BROKER_PORT 1883
 
 uint32_t nextpublish;
 char *willtopic = "Henry/will";
@@ -24,20 +26,19 @@ char *willmessage = "byebye2";
 char imei[20];
 #define PUB_DELTA 25000 // publish every 20 secs
 bool allowConnect = true;   // only allow the first connect
-#define DEBUG_SERIAL Serial
 void setup() {
-  DEBUG_SERIAL.begin(115200);
+  Serial.begin(115200);
   Serial1.begin(115200);
    // A6 uses default baud 115200
    // power up the board, do hardware reset & get ready to execute commands
-   DEBUG_SERIAL.println("A6 MQTT Will demo");
-   DEBUG_SERIAL.print("Open up a client and subscribe to ");
-   DEBUG_SERIAL.println(willtopic);
-   DEBUG_SERIAL.print(KEEP_ALIVE_TIME); DEBUG_SERIAL.println(" secs after connecting to broker the Will message should appear");
+   Serial.println("A6 MQTT Will demo");
+   Serial.print("Open up a client and subscribe to ");
+   Serial.println(willtopic);
+   Serial.print(KEEP_ALIVE_TIME); Serial.println(" secs after connecting to broker the Will message should appear");
    
   if (gsm.begin()) 
   {
-    DEBUG_SERIAL.println("GSM up");
+    Serial.println("GSM up");
     // we need a unique userid when logging on to the broker. We also need a unique topic
     // name. We'll use this devices IMIE tp get that.
     if (!gsm.getIMEI(imei))
@@ -45,15 +46,15 @@ void setup() {
     // setup GPRS connection with your provider
     if (gsm.startIP(APN))
     {
-      DEBUG_SERIAL.println("IP up");
+      Serial.println("IP up");
       // AutoConnect sets up TCP session with the broker and makes a user connection
-      MQTT.AutoConnect();
+      AutoConnect();
     }
     else
-      DEBUG_SERIAL.println("IP down");
+      Serial.println("IP down");
   }
   else
-    DEBUG_SERIAL.println("GSM down");
+    Serial.println("GSM down");
 }
 void loop() {
   /*
@@ -69,6 +70,36 @@ void loop() {
       MQTT.Parse(mm,l);
   }
   else
-    MQTT.AutoConnect();
+    AutoConnect();
 }
+
+void serialEvent1() {
+  while (Serial1.available())
+    gsm.push((char)Serial1.read());
+}
+
+/*
+ * This function is called once in main setup
+ * OnDisconnect below also calls AutoConnect but it is not coumpulsory
+ */
+void AutoConnect()
+{
+  if (allowConnect)
+  {
+    if (gsm.connectTCPserver(BROKER_ADDRESS,BROKER_PORT))
+    {
+      allowConnect = false;
+      Serial.println("TCP up");
+      // connect, no userid, password or Will
+      MQTT.waitingforConnack = MQTT.connect(imei,false,             // broker IP address
+         false, false, "", "",                                // no credentials
+         true, MQTT.QOS_0, false, willtopic, willmessage); // Will stuff
+    }
+    else
+      Serial.println("TCP down");
+  }
+  else
+    Serial.println("No connect allowed");
+}
+
 

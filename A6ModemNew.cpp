@@ -10,7 +10,7 @@
  */
 #include "Arduino.h"
 #include "A6ModemNew.h"
-#include <TimerOne.h>
+//#include <TimerOne.h>
 
 bool A6GPRSDevice::begin()
 {

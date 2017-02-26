@@ -33,15 +33,12 @@ class A6GPRS: public virtual A6GPRSDevice
 	bool dial(char[]);
 	bool answer();
 	bool hangup();
-	bool clip(bool);
+	bool callerID(bool);
 	enum ecallState callState;
 	bool sendDTMF(char,unsigned);
 	bool sendDTMF(char);
 	bool sendSMS(char [],char []);
-//	char smsbuffer[160];
-//	char smsSender[20];
-//	callState = IDLE;
-//	nextLineSMS = false;
+	bool setSmsTextMode();
   private:
     eCIPstatus CIPstatus;
 	unsigned maxMessageLength;
@@ -52,7 +49,5 @@ class A6GPRS: public virtual A6GPRSDevice
 	unsigned clientMsgLength;
 	bool nextLineSMS;
 };
-
-extern A6GPRS gsm;  // instance
 #endif
 

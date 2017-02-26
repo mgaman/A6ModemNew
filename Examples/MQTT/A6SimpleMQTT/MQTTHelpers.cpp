@@ -10,33 +10,15 @@
 #include <Arduino.h>
 #include <A6Services.h>
 #include <A6MQTT.h>
-//#include <SoftwareSerial.h>
 
-#define BROKER_ADDRESS "test.mosquitto.org"  // public broker
-//#define BROKER_ADDRESS "iot.eclipse.org"  // public broker
-#define BROKER_PORT 1883
-extern char topic[];
-extern char imei[];
-extern A6MQTT MQTT;
+extern char imei[],topic[];
+extern A6GPRS gsm;
 extern char buff[]; 
-#define DEBUG_SERIAL Serial
 
 /*
  * This function is called once in main setup
  * OnDisconnect below also calls AutoConnect but it is not coumpulsory
  */
-void A6MQTT::AutoConnect()
-{
-  if (gsm.connectTCPserver(BROKER_ADDRESS,BROKER_PORT))
-  {
-    DEBUG_SERIAL.println("TCP up");
-    // connect, no userid, password or Will
-    MQTT.waitingforConnack = connect(imei, false);
-  }
-  else
-    DEBUG_SERIAL.println("TCP down");
-}
-
 /*
  * This function ic called upon receiving a CONNACK message
  * Note that you should not assume that the connection was successful - check it!
@@ -45,17 +27,17 @@ void A6MQTT::OnConnect(enum eConnectRC rc)
 {
   switch (rc)
   {
-    case MQTT.CONNECT_RC_ACCEPTED:
-      DEBUG_SERIAL.print("Connected to broker ");
-      DEBUG_SERIAL.println(BROKER_ADDRESS);
-      MQTT._PingNextMillis = millis() + (MQTT._KeepAliveTimeOut*1000) - 2000;
-      MQTT.subscribe(1234,topic,MQTT.QOS_0);
+    case CONNECT_RC_ACCEPTED:
+      Serial.print("Connected to broker ");
+//      Serial.println(BROKER_ADDRESS);
+      _PingNextMillis = millis() + (_KeepAliveTimeOut*1000) - 2000;
+      subscribe(1234,topic,QOS_0);
      break;
-    case MQTT.CONNECT_RC_REFUSED_PROTOCOL:
-      DEBUG_SERIAL.println("Protocol error");
+    case CONNECT_RC_REFUSED_PROTOCOL:
+      Serial.println("Protocol error");
       break;
-    case MQTT.CONNECT_RC_REFUSED_IDENTIFIER:
-      DEBUG_SERIAL.println("Identity error");
+    case CONNECT_RC_REFUSED_IDENTIFIER:
+      Serial.println("Identity error");
       break;
   }
 }
@@ -65,8 +47,8 @@ void A6MQTT::OnConnect(enum eConnectRC rc)
  */
 void A6MQTT::OnSubscribe(uint16_t pi)
 {
-  DEBUG_SERIAL.print("Subscribed to ");
-  DEBUG_SERIAL.println(topic);
+  Serial.print("Subscribed to ");
+  Serial.println(topic);
 }
 
 /*
@@ -75,15 +57,15 @@ void A6MQTT::OnSubscribe(uint16_t pi)
 void A6MQTT::OnMessage(char *topic,char *message,bool dup, bool ret,A6MQTT::eQOS qos)
 {
   if (dup)
-    DEBUG_SERIAL.print("DUP ");
+    Serial.print("DUP ");
   if (ret)
-    DEBUG_SERIAL.print("RET ");
-  DEBUG_SERIAL.print("QOS ");
-  DEBUG_SERIAL.println(qos);
-  DEBUG_SERIAL.print("Topic: ");DEBUG_SERIAL.println(topic);
-  DEBUG_SERIAL.print("Message: ");DEBUG_SERIAL.println(message);
+    Serial.print("RET ");
+  Serial.print("QOS ");
+  Serial.println(qos);
+  Serial.print("Topic: ");Serial.println(topic);
+  Serial.print("Message: ");Serial.println(message);
   sprintf(buff,"RX %lu TX %lu",gsm.rxcount,gsm.txcount);
-  DEBUG_SERIAL.println(buff);
+  Serial.println(buff);
 }
 
 /*
@@ -92,8 +74,8 @@ void A6MQTT::OnMessage(char *topic,char *message,bool dup, bool ret,A6MQTT::eQOS
  */
 void A6MQTT::OnPubAck(uint16_t messageid)
 {
-  DEBUG_SERIAL.print("Packet ");
-  DEBUG_SERIAL.print(messageid,HEX);
-  DEBUG_SERIAL.println(" Acknowledged");
+  Serial.print("Packet ");
+  Serial.print(messageid,HEX);
+  Serial.println(" Acknowledged");
 }
 

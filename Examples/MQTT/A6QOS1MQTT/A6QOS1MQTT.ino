@@ -18,6 +18,8 @@ A6GPRS gsm(Serial1,500,200);    // allocate 500 byte circular buffer, largest me
 #define KEEP_ALIVE_TIME 30
 #define MAX_MQTT_MESSAGE_LENGTH  100
 A6MQTT MQTT(gsm,KEEP_ALIVE_TIME,MAX_MQTT_MESSAGE_LENGTH);
+#define BROKER_ADDRESS "test.mosquitto.org"  // public broker
+#define BROKER_PORT 1883
 
 uint32_t nextpublish;
 char topic[30];
@@ -27,7 +29,7 @@ char imei[20];
 void setup() {
   Serial.begin(115200);
   Serial1.begin(115200);
-  //gsm.enableDebug = true;
+  gsm.enableDebug = false;
    // A6 uses default baud 115200
    // power up the board, do hardware reset & get ready to execute commands
   if (gsm.begin()) 
@@ -46,7 +48,7 @@ void setup() {
     {
       Serial.println("IP up");
       // AutoConnect sets up TCP session with the broker and makes a user connection
-      MQTT.AutoConnect();
+      AutoConnect();
     }
     else
       Serial.println("IP down");
@@ -88,6 +90,28 @@ void loop() {
       MQTT.Parse(mm,l);
   }
   else
-    MQTT.AutoConnect();
+    AutoConnect();
 }
+
+void serialEvent1() {
+  while (Serial1.available())
+    gsm.push((char)Serial1.read());
+}
+
+/*
+ * This function is called once in main setup
+ * OnDisconnect below also calls AutoConnect but it is not coumpulsory
+ */
+void AutoConnect()
+{
+  if (gsm.connectTCPserver(BROKER_ADDRESS,BROKER_PORT))
+  {
+    Serial.println("TCP up");
+    // connect, no userid, password or Will
+    MQTT.waitingforConnack = MQTT.connect(imei, false);
+  }
+  else
+    Serial.println("TCP down");
+}
+
 

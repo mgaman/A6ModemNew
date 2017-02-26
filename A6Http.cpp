@@ -15,7 +15,7 @@ bool A6HTTP::get(char server[], char path[])
 	strings[2] = " HTTP/1.1\r\nUser-Agent Arduino\r\nAccept: text/plain\r\nHost: ";
 	strings[3] = server;
 	strings[4] = "\r\n\r\n";
-	return gsm.sendToServer(strings,5);		
+	return _a6gprs->sendToServer(strings,5);		
 }
 
 bool A6HTTP::get(char server[])
@@ -37,7 +37,7 @@ bool  A6HTTP::post(char server[],char path[],char parms[])
 	strings[6] = "\r\n\r\n";
 	strings[7] = parms;
 	
-	return gsm.sendToServer(strings,8);		
+	return _a6gprs->sendToServer(strings,8);		
 	
 }
 void A6HTTP::Parse(byte *rawData,unsigned length)

@@ -1,9 +1,6 @@
 #ifndef A6DEVICE_H
 #define A6DEVICE_H
 
-//#define A6_BAUDRATE 115200
-//#define COMM_BUF_LEN 200  // make big enough to hold all incoming data
-
 class A6GPRSDevice
 {
   public:

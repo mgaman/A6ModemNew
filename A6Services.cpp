@@ -12,7 +12,6 @@ A6GPRS::A6GPRS(Stream &comm,unsigned cbs,unsigned maxmessagelength){
   modemmessage = new byte[maxmessagelength];
   maxMessageLength = maxmessagelength;
   ParseState = GETMM;
- // ignoreData = false;
   callState = IDLE;
   nextLineSMS = false;
 };
@@ -98,7 +97,6 @@ char *A6GPRS::getCIPstatusString()
 bool A6GPRS::startIP(char apn[],char user[],char pwd[])  // apn, username, password
 {
   bool rc = false;
-  ///cid = 1; //gsm.getcid();
   RXFlush();
   if (CIPstatus != IP_INITIAL)
   {
@@ -111,7 +109,6 @@ bool A6GPRS::startIP(char apn[],char user[],char pwd[])  // apn, username, passw
   {
     RXFlush();
     sprintf(tempbuf,"AT+CGDCONT=1,\"IP\",\"%s\"\r",apn);
- //   debugWrite(tempbuf);
     modemPrint(tempbuf);
     if (waitresp("OK\r\n",1000))
     {
@@ -192,15 +189,10 @@ bool A6GPRS::getLocalIP(char ip[])
 bool A6GPRS::connectTCPserver(char*path,int port)
 {
   bool rc = false;
-//  debugWrite(path);
-//  debugWrite("\r\n");
-//  debugWrite(port);
-//  debugWrite("\r\n");
   CIPstatus = getCIPstatus();
   if (CIPstatus == IP_CLOSE || CIPstatus == IP_GPRSACT)
   {
     sprintf(tempbuf,"AT+CIPSTART=\"TCP\",\"%s\",%d\r",path,port);
- //   debugWrite(tempbuf);
     modemPrint(tempbuf);
     if (waitresp("CONNECT OK",10000))
     {
@@ -402,9 +394,8 @@ bool A6GPRS::hangup()
 	callState = IDLE;
 	return waitresp("OK",1000);
 }
-bool A6GPRS::clip(bool enable)
+bool A6GPRS::callerID(bool enable)
 {
-	// avoid sprintf
 	modemPrint(F("AT+CLIP="));
 	modemPrint(enable);
 	modemPrint(F("\r"));
@@ -434,4 +425,10 @@ bool A6GPRS::sendSMS(char addr[],char text[])
 	modemPrint(text);
 	modemWrite(0x1a);
 	return waitresp("+CMGS:",5000);
+}
+
+bool A6GPRS::setSmsTextMode()
+{
+	modemPrint(F("AT+CMGF=1\r")); // SMS text mode
+	return waitresp("OK\r\n",1000);		
 }

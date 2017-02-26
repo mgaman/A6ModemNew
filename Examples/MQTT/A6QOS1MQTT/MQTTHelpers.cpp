@@ -16,30 +16,12 @@
 #include "A6Services.h"
 #include "A6MQTT.h"
 
-#define BROKER_ADDRESS "test.mosquitto.org"  // public broker
-#define BROKER_PORT 1883
 extern char topic[];
 extern char imei[];
-extern A6MQTT MQTT;
+//extern A6MQTT MQTT;
 extern uint16_t messageid;
 
 static char linebuff[50];
-/*
- * This function is called once in main setup
- * OnDisconnect below also calls AutoConnect but it is not coumpulsory
- */
-void A6MQTT::AutoConnect()
-{
-  if (gsm.connectTCPserver(BROKER_ADDRESS,BROKER_PORT))
-  {
-    Serial.println("TCP up");
-    // connect, no userid, password or Will
-    MQTT.waitingforConnack = connect(imei, false);
-  }
-  else
-    Serial.println("TCP down");
-}
-
 /*
  * This function ic called upon receiving a CONNACK message
  * Note that you should not assume that the connection was successful - check it!
@@ -49,16 +31,16 @@ void A6MQTT::OnConnect(enum eConnectRC rc)
 {
   switch (rc)
   {
-    case MQTT.CONNECT_RC_ACCEPTED:
+    case CONNECT_RC_ACCEPTED:
       Serial.print("Connected to broker ");
-      Serial.println(BROKER_ADDRESS);
-      MQTT._PingNextMillis = millis() + (MQTT._KeepAliveTimeOut*1000) - 2000;
-      MQTT.subscribe(PACKET_ID,topic,MQTT.QOS_2);
+ //     Serial.println(BROKER_ADDRESS);
+      _PingNextMillis = millis() + (_KeepAliveTimeOut*1000) - 2000;
+      subscribe(PACKET_ID,topic,QOS_2);
      break;
-    case MQTT.CONNECT_RC_REFUSED_PROTOCOL:
+    case CONNECT_RC_REFUSED_PROTOCOL:
       Serial.println("Protocol error");
       break;
-    case MQTT.CONNECT_RC_REFUSED_IDENTIFIER:
+    case CONNECT_RC_REFUSED_IDENTIFIER:
       Serial.println("Identity error");
       break;
   }

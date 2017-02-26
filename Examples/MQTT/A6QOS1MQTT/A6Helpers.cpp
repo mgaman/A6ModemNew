@@ -10,7 +10,7 @@
 #define TRANSISTOR_CONTROL 7  // connect to base of transistor
 #define A6_RESET_TIME 50 // ms
 
-extern A6GPRS gsm;
+//extern A6GPRS gsm;
 
 void A6GPRSDevice::HWReset()
 {
@@ -53,8 +53,4 @@ void A6GPRSDevice::debugWrite(const __FlashStringHelper*s)
     Serial.print(s);  
 }
 
-void serialEvent1() {
-  while (Serial1.available())
-    gsm.push((char)Serial1.read());
-}
 

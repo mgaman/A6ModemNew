@@ -98,7 +98,7 @@ class A6MQTT
     bool disconnect(void);
     bool ping(void);
     void Parse(byte *,unsigned);
-    void AutoConnect(void);
+//    void AutoConnect(void);
 	// callbacks
     void OnConnect(eConnectRC) __attribute__((weak));
     void OnSubscribe(uint16_t)  __attribute__((weak));

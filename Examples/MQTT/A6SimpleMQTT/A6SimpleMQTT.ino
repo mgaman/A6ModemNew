@@ -18,22 +18,25 @@ A6GPRS gsm(Serial1,500,200);    // allocate 500 byte circular buffer, largest me
 #define MAX_MQTT_MESSAGE_LENGTH  100
 A6MQTT MQTT(gsm,KEEP_ALIVE_TIME,MAX_MQTT_MESSAGE_LENGTH);
 
+#define BROKER_ADDRESS "test.mosquitto.org"  // public broker
+//#define BROKER_ADDRESS "iot.eclipse.org"  // public broker
+#define BROKER_PORT 1883
+
 uint32_t nextpublish;
 char topic[30];
 char imei[20];
 #define PUB_DELTA 25000 // publish every 20 secs
 
-#define DEBUG_SERIAL Serial
 void setup() {
-  DEBUG_SERIAL.begin(115200);
+  Serial.begin(115200);
   Serial1.begin(115200);
    // A6 uses default baud 115200
    // power up the board, do hardware reset & get ready to execute commands
-   DEBUG_SERIAL.println("A6 Simple MQTT");
+   Serial.println("A6 Simple MQTT");
 //   gsm.enableDebug = true;
   if (gsm.begin()) 
   {
-    DEBUG_SERIAL.println("GSM up");
+    Serial.println("GSM up");
     // we need a unique userid when logging on to the broker. We also need a unique topic
     // name. We'll use this devices IMIE tp get that.
     if (!gsm.getIMEI(imei))
@@ -43,15 +46,15 @@ void setup() {
     // setup GPRS connection with your provider
     if (gsm.startIP(APN))
     {
-      DEBUG_SERIAL.println("IP up");
+      Serial.println("IP up");
       // AutoConnect sets up TCP session with the broker and makes a user connection
-      MQTT.AutoConnect();
+      AutoConnect();
     }
     else
-      DEBUG_SERIAL.println("IP down");
+      Serial.println("IP down");
   }
   else
-    DEBUG_SERIAL.println("GSM down");
+    Serial.println("GSM down");
 }
 void loop() {
   /*
@@ -84,6 +87,19 @@ void loop() {
       MQTT.Parse(mm,l);
   }
   else
-    MQTT.AutoConnect();
+    AutoConnect();
 }
+
+void AutoConnect()
+{
+  if (gsm.connectTCPserver(BROKER_ADDRESS,BROKER_PORT))
+  {
+    Serial.println("TCP up");
+    // connect, no userid, password or Will
+    MQTT.waitingforConnack = MQTT.connect(imei, false);
+  }
+  else
+    Serial.println("TCP down");
+}
+
 
