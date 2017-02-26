@@ -42,13 +42,13 @@ passed to the library for processing. Example code shows how this is done.
 A6GPRS(Stream,CircularBufferSize,LargestItemSize)<br>
 Stream may be any hardware serial port, Serial, Serial1, Serial2, Serial3.<br>
 Incoming data is saved in a circular buffer of size <b>CircularBufferSize</b> bytes.<br>
-Incoming data is parsed into individual items, usually strings ending in <cr><lf> or blocks of data coming from a TCP server.
+Incoming data is parsed into individual items, usually strings ending in CR/LF or blocks of data coming from a TCP server.
 <b>LargestItemSize</b> as its name implies is the largest item you expect to receive.
 <h3>A6CALL</h3>
 A6CALL(A6GPRS instance)
 <h3>A6HTTP</h3>
 A6HTTP(A6GPRS instance)
-The LargestItemSize parameter of the A6GPRS constructor should reflect the largest response you will get from and HTTP GET or POST.
+The LargestItemSize parameter of the A6GPRS constructor should reflect the largest response you will get from an HTTP GET or POST.
 <h3>A6MQTT</h3>
 A6MQTT(A6GPRS instance,KeepAliveTime,maxMessageLength)
 KeepAliveTime is the value (in seconds) passed to the MQTT broker when connecting.<br>
