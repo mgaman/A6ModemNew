@@ -71,4 +71,9 @@ Callback events of the A6CALL class (onDialin, OnPhoneEvent) provide indication 
 dialling in, call answwer and call disconnect.<br>
 The A6MQTT class has callback methods (onConnect,OnSubscribe,OnMessage,OnPubAck) to help manage the progress of connecting to the broker. following
 the success of QOS2 and QOS3 publication and the arrival of new messages.
-
+<h2>Open Issues</h2>
+<ul>
+<li>Incoming block from Broker may contain more than 1 command. At the moment only the first command is processed.
+This typically happens when starting a new session releases of backlog on ratained or uncompleted QOS-1/QOS-2 messages.</li>
+<li>The standard allows for subscribing to more than 1 topic per packet identifier. Currently I only support 1 topic per packet ID</li>
+</ul>

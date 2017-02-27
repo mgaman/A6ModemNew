@@ -21,7 +21,7 @@ A6MQTT MQTT(gsm,KEEP_ALIVE_TIME,MAX_MQTT_MESSAGE_LENGTH);
 
 uint32_t nextpublish;
 char *willtopic = "Henry/will";
-char *willmessage = "byebye2";
+char *willmessage = "byebye";
 
 char imei[20];
 #define PUB_DELTA 25000 // publish every 20 secs
@@ -45,11 +45,7 @@ void setup() {
       strcpy(imei,"defaultime");
     // setup GPRS connection with your provider
     if (gsm.startIP(APN))
-    {
       Serial.println("IP up");
-      // AutoConnect sets up TCP session with the broker and makes a user connection
-      AutoConnect();
-    }
     else
       Serial.println("IP down");
   }
@@ -57,20 +53,16 @@ void setup() {
     Serial.println("GSM down");
 }
 void loop() {
+    byte *mm;
+    unsigned l;
   /*
    * We send nothing which will cause the broker to disconnect us after KeepAlive seconds
    * THe Will & Testament will be sent to anyone subscrobed
    */
-  if (gsm.connectedToServer || MQTT.waitingforConnack)
-  {
-    byte *mm;
-    unsigned l;
-    mm = gsm.Parse(&l);
-    if (l != 0)
-      MQTT.Parse(mm,l);
-  }
-  else
-    AutoConnect();
+  AutoConnect();
+  mm = gsm.Parse(&l);
+  if (l != 0)
+    MQTT.Parse(mm,l);
 }
 
 void serialEvent1() {
@@ -84,22 +76,26 @@ void serialEvent1() {
  */
 void AutoConnect()
 {
-  if (allowConnect)
+  if (!gsm.connectedToServer)
   {
-    if (gsm.connectTCPserver(BROKER_ADDRESS,BROKER_PORT))
+    if (allowConnect)
     {
-      allowConnect = false;
-      Serial.println("TCP up");
-      // connect, no userid, password or Will
-      MQTT.waitingforConnack = MQTT.connect(imei,false,             // broker IP address
-         false, false, "", "",                                // no credentials
-         true, MQTT.QOS_0, false, willtopic, willmessage); // Will stuff
+      if (gsm.connectTCPserver(BROKER_ADDRESS,BROKER_PORT))
+      {
+        allowConnect = false;
+        Serial.println("TCP up");
+        // connect, no userid, password or Will
+        MQTT.connect(imei,false,             // broker IP address
+           false, false, "", "",                                // no credentials
+           true, MQTT.QOS_0, false, willtopic, willmessage); // Will stuff
+        
+      }
+      else
+        Serial.println("TCP down");
     }
     else
-      Serial.println("TCP down");
+      Serial.println("Already Done");
   }
-  else
-    Serial.println("No connect allowed");
 }
 
 

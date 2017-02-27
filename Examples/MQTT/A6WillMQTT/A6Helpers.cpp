@@ -54,4 +54,22 @@ void A6GPRSDevice::debugWrite(const __FlashStringHelper*s)
   if (enableDebug)
     DEBUG_SERIAL.print(s);  
 }
+void A6GPRSDevice::onException( eExceptions e, int d)
+{
+  switch (e)
+  {
+    case BUFFER_OVERFLOW:
+      Serial.print("BO: ");Serial.println(d);
+      break;
+    case URL_TOO_LONG:
+      Serial.print("UL: ");Serial.println(d);
+      break;
+    case CIRC_BUFFER_OVERFLOW:
+      Serial.print("CB: ");Serial.println(d);
+      break;
+    default:
+      Serial.print("UN: ");Serial.println(d);
+      break;
+  }
+}
 

@@ -14,7 +14,9 @@
 extern char imei[],topic[];
 extern A6GPRS gsm;
 extern char buff[]; 
-
+extern uint32_t nextpublish;
+#define PUB_DELTA 25000 // publish every 20 secs
+extern bool setupFinished;
 /*
  * This function is called once in main setup
  * OnDisconnect below also calls AutoConnect but it is not coumpulsory
@@ -28,10 +30,13 @@ void A6MQTT::OnConnect(enum eConnectRC rc)
   switch (rc)
   {
     case CONNECT_RC_ACCEPTED:
-      Serial.print("Connected to broker ");
-//      Serial.println(BROKER_ADDRESS);
+      Serial.println("Connected to broker ");
       _PingNextMillis = millis() + (_KeepAliveTimeOut*1000) - 2000;
-      subscribe(1234,topic,QOS_0);
+     Serial.print("Subscribing to ");Serial.print(topic);
+     if (subscribe(1234,topic,QOS_0))
+       Serial.println(" succeeded");
+     else
+       Serial.println(" failed");
      break;
     case CONNECT_RC_REFUSED_PROTOCOL:
       Serial.println("Protocol error");
@@ -48,13 +53,14 @@ void A6MQTT::OnConnect(enum eConnectRC rc)
 void A6MQTT::OnSubscribe(uint16_t pi)
 {
   Serial.print("Subscribed to ");
-  Serial.println(topic);
+  Serial.println(pi);
+  setupFinished = true;
 }
 
 /*
  * Called when a piblish message is received.
  */
-void A6MQTT::OnMessage(char *topic,char *message,bool dup, bool ret,A6MQTT::eQOS qos)
+void A6MQTT::OnMessage(char *topic,char *message,bool dup, bool ret,A6MQTT::eQOS qos,uint16_t mid)
 {
   if (dup)
     Serial.print("DUP ");
@@ -62,6 +68,11 @@ void A6MQTT::OnMessage(char *topic,char *message,bool dup, bool ret,A6MQTT::eQOS
     Serial.print("RET ");
   Serial.print("QOS ");
   Serial.println(qos);
+  if (qos > QOS_0)
+  {
+    Serial.print("Message ID ");
+    Serial.println(mid);
+  }
   Serial.print("Topic: ");Serial.println(topic);
   Serial.print("Message: ");Serial.println(message);
   sprintf(buff,"RX %lu TX %lu",gsm.rxcount,gsm.txcount);

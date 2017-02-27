@@ -58,7 +58,7 @@ char A6GPRSDevice::pop()
   else
   {
     c = comm_buf[outlevel++];
-	  debugWrite(c);
+	debugWrite(c);
     if (outlevel == commbuffsize)  // handle wrap around
       outlevel = 0;
     if (inlevel == outlevel)

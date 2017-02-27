@@ -84,8 +84,6 @@ class A6MQTT
     enum eConnectRC {CONNECT_RC_ACCEPTED, CONNECT_RC_REFUSED_PROTOCOL,CONNECT_RC_REFUSED_IDENTIFIER};
     enum eQOS {QOS_0,QOS_1,QOS_2};
     A6MQTT(A6GPRS& a6gprs,unsigned long KeepAlive,unsigned MaxMessageLength);
- //   bool connectedToServer;  // moved to A6Services
-    bool waitingforConnack;
     volatile unsigned long _PingNextMillis = 0;
     bool connect(char *ClientIdentifier, bool CleanSession, bool UserNameFlag, bool PasswordFlag, char *UserName, char *Password, bool WillFlag,
                	eQOS WillQoS, bool WillRetain, char *WillTopic, char *WillMessage);
@@ -102,9 +100,11 @@ class A6MQTT
 	// callbacks
     void OnConnect(eConnectRC) __attribute__((weak));
     void OnSubscribe(uint16_t)  __attribute__((weak));
-    void OnMessage(char *Topic,char *Message,bool,bool,eQOS)   __attribute__((weak));
+    void OnMessage(char *Topic,char *Message,bool,bool,eQOS, uint16_t)   __attribute__((weak));
     void OnPubAck(uint16_t messageid) __attribute__((weak));
+    void OnPubComplete(uint16_t messageid) __attribute__((weak));
     void OnUnsubscribe(uint16_t)  __attribute__((weak));
+	bool connectedToBroker;
     A6GPRS *_a6gprs;
   private:
     void mqttparse(byte[]);
@@ -113,6 +113,7 @@ class A6MQTT
     bool pubrel(uint16_t);
 	bool puback(uint16_t);
 	bool pubcomp(uint16_t);
+	bool pubrec(uint16_t);
     unsigned maxmessagelength;
 };
 #endif /* A6_MQTT_H_ */

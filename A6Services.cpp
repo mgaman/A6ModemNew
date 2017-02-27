@@ -198,6 +198,7 @@ bool A6GPRS::connectTCPserver(char*path,int port)
     {
       debugWrite(">>");
       waitresp("OK\r\n",10000);
+	  connectedToServer = true;
       rc = true;
     }
   }
@@ -277,15 +278,14 @@ bool A6GPRS::sendToServer(byte msg[],int length)
     modemPrint(F("\r"));
     if (waitresp(">",100))
     {
-      for (int i=0;i<length;i++)
-      {
-        sprintf(buff,"%02X,",msg[i]);
-        debugWrite(buff);
-        modemWrite(msg[i]);
-		txcount++;
-      }
-      waitresp("OK\r\n",1000);
-      rc = true;
+	  for (int i=0;i<length;i++)
+	  {
+		sprintf(buff,"%02X,",msg[i]);
+		debugWrite(buff);
+		modemWrite(msg[i]);
+		txcount++;  
+	  }
+      rc = waitresp("OK\r\n",3000);
     }
   }
   return rc;
@@ -302,17 +302,19 @@ byte *A6GPRS::Parse(unsigned *length)
 {
   byte *mm = 0;
   *length = 0;
+  bool alldone = false;
   char c = pop();
-  while (c != -1)
+  while (!alldone && c != -1)
   {
     switch (ParseState)
     {
       case GETMM:
         modemmessage[modemMessageLength++] = c;
 		// first check if we got an unsolicited message
-		if (c == 0x0a || c == 0x0d)
+		if (c == 0x0a /*|| c == 0x0d*/)
 		{
 			*length = modemMessageLength;
+			alldone = true;
 			modemmessage[modemMessageLength]=0; // end marker
 			mm = modemmessage;
 			modemMessageLength = 0;
@@ -321,15 +323,16 @@ byte *A6GPRS::Parse(unsigned *length)
         else if (modemMessageLength == 8 && strncmp(modemmessage,"+CIPRCV:",8) == 0)
         {
             ParseState = GETLENGTH;
-
             modemMessageLength = 0;
         }
         else if (modemMessageLength == 11 && strncmp(modemmessage,"+TCPCLOSED:",11) == 0)
         {
             debugWrite(F("Server closed connection\r\n"));
             connectedToServer = false;
+			ParseState = GETMM;
+			modemMessageLength = 0;
             stopIP();
-            getCIPstatus();
+           // getCIPstatus();
         }
         break;
       case GETLENGTH:
@@ -338,9 +341,12 @@ byte *A6GPRS::Parse(unsigned *length)
         {
           modemmessage[modemMessageLength] = 0;
           clientMsgLength = atoi(modemmessage);
-		//  ignoreData = clientMsgLength > maxMessageLength;
+	//	  debugWrite("ClientMsgLength ");
+	//	  debugWrite(clientMsgLength);
 		  rxcount += clientMsgLength;
           modemMessageLength = 0;
+		  if (clientMsgLength > maxMessageLength)
+			  debugWrite("Item is too large");
           ParseState = GETDATA;
         }
         break;
@@ -353,9 +359,11 @@ byte *A6GPRS::Parse(unsigned *length)
         {
           ParseState = GETMM;
           modemMessageLength = 0;
+		  alldone = true;
 		  mm = modemmessage;
 		  if (clientMsgLength > maxMessageLength)
 		  {
+			  debugWrite("item too large");
 			  onException(BUFFER_OVERFLOW,clientMsgLength);
 			  *length = maxMessageLength;
 		  }
@@ -364,7 +372,8 @@ byte *A6GPRS::Parse(unsigned *length)
         }
         break;
     }
-    c = pop();
+	if (!alldone)
+		c = pop();
   }
   return mm;
 }

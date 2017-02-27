@@ -52,7 +52,7 @@ void A6MQTT::OnSubscribe(uint16_t pi)
 /*
  * Called when a piblish message is received.
  */
-void A6MQTT::OnMessage(char *topic,char *message,bool dup, bool ret,A6MQTT::eQOS qos)
+void A6MQTT::OnMessage(char *topic,char *message,bool dup, bool ret,A6MQTT::eQOS qos,uint16_t mid)
 {
   if (dup)
     Serial.print("DUP ");
@@ -60,6 +60,11 @@ void A6MQTT::OnMessage(char *topic,char *message,bool dup, bool ret,A6MQTT::eQOS
     Serial.print("RET ");
   Serial.print("QOS ");
   Serial.println(qos);
+  if (qos > QOS_0)
+  {
+    Serial.print("Message Id ");
+    Serial.println(mid);
+  }
   Serial.print("Topic: ");Serial.println(topic);
   Serial.print("Message: ");Serial.println(message);
   sprintf(buff,"RX %lu TX %lu",gsm.rxcount,gsm.txcount);

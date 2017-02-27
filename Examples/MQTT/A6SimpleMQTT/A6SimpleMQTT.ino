@@ -12,7 +12,7 @@
 char buff[100];    // We must send at least 1 packet within the chosen keepalive time
                   // If you have nothing else to send, send at least a  ping
 #define APN "uinternet"  // write your APN here
-A6GPRS gsm(Serial1,500,200);    // allocate 500 byte circular buffer, largest message 200 bytes
+A6GPRS gsm(Serial1,1500,40);    // allocate 500 byte circular buffer, largest message 200 bytes
 
 #define KEEP_ALIVE_TIME 30
 #define MAX_MQTT_MESSAGE_LENGTH  100
@@ -26,6 +26,7 @@ uint32_t nextpublish;
 char topic[30];
 char imei[20];
 #define PUB_DELTA 25000 // publish every 20 secs
+bool setupFinished = false;
 
 void setup() {
   Serial.begin(115200);
@@ -33,7 +34,7 @@ void setup() {
    // A6 uses default baud 115200
    // power up the board, do hardware reset & get ready to execute commands
    Serial.println("A6 Simple MQTT");
-//   gsm.enableDebug = true;
+   gsm.enableDebug = false;
   if (gsm.begin()) 
   {
     Serial.println("GSM up");
@@ -48,13 +49,14 @@ void setup() {
     {
       Serial.println("IP up");
       // AutoConnect sets up TCP session with the broker and makes a user connection
-      AutoConnect();
+     // AutoConnect();
     }
     else
       Serial.println("IP down");
   }
   else
     Serial.println("GSM down");
+  gsm.enableDebug = false;
 }
 void loop() {
   /*
@@ -62,7 +64,13 @@ void loop() {
    */
   unsigned l;
   byte *mm;
-  if (gsm.connectedToServer || MQTT.waitingforConnack)
+  // check if TCP connection still up
+  if (!gsm.connectedToServer)
+    MQTT.connectedToBroker = false;
+  mm = gsm.Parse(&l);
+  if (l != 0)
+    MQTT.Parse(mm,l);
+  if (MQTT.connectedToBroker && setupFinished)
   {
     /*
      * This machanism ensures that the connection with the broker is not disconnected du to inactivirt
@@ -78,28 +86,38 @@ void loop() {
       sprintf(buff,"%lu",millis());
       MQTT.publish(topic,buff); // dup false, retain false, QOS 
     }
-    /*
-     * Process data received from the broker
-     * Note that this may be mixed up with unsolicited messages from the modem. Parse takes car of that
-     */
-    mm = gsm.Parse(&l);
-    if (l != 0)
-      MQTT.Parse(mm,l);
   }
   else
     AutoConnect();
+  /*
+   * Process data received from the broker
+   * Note that this may be mixed up with unsolicited messages from the modem. Parse takes car of that
+   */
+  mm = gsm.Parse(&l);
+  if (l != 0)
+    MQTT.Parse(mm,l);
 }
 
 void AutoConnect()
 {
-  if (gsm.connectTCPserver(BROKER_ADDRESS,BROKER_PORT))
+  if (!gsm.connectedToServer)
   {
-    Serial.println("TCP up");
-    // connect, no userid, password or Will
-    MQTT.waitingforConnack = MQTT.connect(imei, false);
+    if (gsm.connectTCPserver(BROKER_ADDRESS,BROKER_PORT))
+    {
+      Serial.println("TCP up");
+      // connect, no userid, password or Will
+      if (MQTT.connect(imei, true))
+        Serial.println("Connect to broker started");
+      else
+        Serial.println("Failed to contact broker");
+    }
+    else
+      Serial.println("TCP down");
   }
-  else
-    Serial.println("TCP down");
 }
 
+void serialEvent1() {
+  while (Serial1.available())
+    gsm.push((char)Serial1.read());
+}
 

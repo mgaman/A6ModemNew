@@ -55,8 +55,22 @@ void A6GPRSDevice::debugWrite(const __FlashStringHelper*s)
     DEBUG_SERIAL.print(s);  
 }
 
-void serialEvent1() {
-  while (Serial1.available())
-    gsm.push((char)Serial1.read());
+void A6GPRSDevice::onException(eExceptions e, int d )
+{
+  switch (e)
+  {
+    case BUFFER_OVERFLOW:
+      Serial.print("BO ");Serial.println(d);
+      break;
+    case URL_TOO_LONG:
+      Serial.print("UL ");Serial.println(d);
+      break;
+    case CIRC_BUFFER_OVERFLOW:
+      Serial.print("CB ");Serial.println(d);
+      break;
+    default:
+      Serial.print("UK ");Serial.println(d);
+      break;
+  }
 }
 
