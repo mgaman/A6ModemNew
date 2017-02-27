@@ -59,21 +59,24 @@ Buffer overflow conditions e.g. receiving a packet from a TCP server that is lar
 Callback which informs what went wrong and the size of the buffer needed. That actual data received will be truncated so no
 actual buffers are overflowed.<br>
 <h2>Porting to other modems</h2>
-The A6HTTP and A6MQTT classes are pretty much modem agnostic, dealing only with a TCP connection created by the A6GPRS class.<br>
-The A6CALL class may need to be tailored for the differences in unsolicited messages for Ringing, CallerID and SMS arrivals.<br>
-The A6GPRS is the only module that uses the modem AT command set so may easily be modified for the differences between modems.
+<ul>
+<li>The A6HTTP and A6MQTT classes are pretty much modem agnostic, dealing only with a TCP connection created by the A6GPRS class.</li>
+<li>The A6CALL class may need to be tailored for the differences in unsolicited messages for Ringing, CallerID and SMS arrivals.</li>
+<li>The A6GPRS is the only module that uses the modem AT command set so may easily be modified for the differences between modems.
+</ul>
 <h2>Helper Code</h2>
-The User may choose to implement the debugWrite method of the A6GPRSDevice class. This prints debug messages to whatever device the user may
-choose.<br>
-The onException method of the A6GPRSDevice class provides useful information on buffer overflows.<br>
-The User should implement the HWReset method of the A6GPRSDevice class, to perform hardware reset of the modem.<br>
-Callback events of the A6CALL class (onDialin, OnPhoneEvent) provide indication of asynchronous events such as SMS arrival, someone
-dialling in, call answwer and call disconnect.<br>
-The A6MQTT class has callback methods (onConnect,OnSubscribe,OnMessage,OnPubAck) to help manage the progress of connecting to the broker. following
-the success of QOS2 and QOS3 publication and the arrival of new messages.
+<ul>
+<li>The User may choose to implement the debugWrite method of the A6GPRSDevice class. This prints debug messages to whatever device the user may
+choose.</li>
+<li>The onException method of the A6GPRSDevice class provides useful information on buffer overflows.</li>
+<li>The User should implement the HWReset method of the A6GPRSDevice class, to perform hardware reset of the modem.</li>
+<li>Callback events of the A6CALL class (onDialin, OnPhoneEvent) provide indication of asynchronous events such as SMS arrival, someone
+dialling in, call answwer and call disconnect.</li>
+<li>The A6MQTT class has callback methods (onConnect,OnSubscribe,OnMessage,OnPubAck,onPubCompletion) to help manage the progress of connecting to the broker. following the success of QOS2 and QOS3 publication and the arrival of new messages</li>
+</ul>
 <h2>Open Issues</h2>
 <ul>
 <li>Incoming block from Broker may contain more than 1 command. At the moment only the first command is processed.
-This typically happens when starting a new session releases of backlog on ratained or uncompleted QOS-1/QOS-2 messages.</li>
+This typically happens when starting a new session releases of backlog of retained or uncompleted QOS-1/QOS-2 messages.</li>
 <li>The standard allows for subscribing to more than 1 topic per packet identifier. Currently I only support 1 topic per packet ID</li>
 </ul>
