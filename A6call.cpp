@@ -15,6 +15,11 @@ void A6CALL::Parse(byte buffer[],unsigned length)
 		return;	// single trailing LF
 	if (strncmp(buffer,"RING",4) == 0)
 		_a6gprs->callState = _a6gprs->CALLER_RINGING;
+	if (strncmp(buffer,"ERROR",5) == 0)
+	{
+		_a6gprs->callState = _a6gprs->CALLER_RINGING;
+		OnPhoneEvent(DISCONNECTED,0);
+	}
 	else if (strncmp(buffer,"+CIEV:",6) == 0)
 	{
 		start = strchr(buffer,'"');	// point to begining of string

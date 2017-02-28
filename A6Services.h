@@ -7,7 +7,7 @@ class A6GPRS: public virtual A6GPRSDevice
   public:
     enum eCIPstatus {IP_INITIAL,IP_START,IP_CONFIG,IP_IND,IP_GPRSACT,IP_STATUS,TCPUDP_CONNECTING,IP_CLOSE,CONNECT_OK,IP_STATUS_UNKNOWN };
     enum ePSstate { DETACHED,ATTACHED,PS_UNKNOWN };
-	enum ecallState {IDLE,CALLER_RINGING,SPEAKING,DIALLING_OUT,CALLERID};
+	enum ecallState {IDLE,CALLER_RINGING,SPEAKING,DIALLING_OUT,CALLERID,DISCONNECTED};
     A6GPRS(Stream &comm,unsigned,unsigned); // constructor uartstream, circular buffer size, max message size
     ~A6GPRS(); // destructor
     bool getIMEI(char[]);

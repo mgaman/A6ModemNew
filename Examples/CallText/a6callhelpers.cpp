@@ -18,6 +18,12 @@ void A6CALL::OnPhoneEvent(enum ephoneEvent e,int parm)
     case SMS_ARRIVED:
       Serial.print("Incoming SMS: ");Serial.println(parm);Serial.println(smsSender);Serial.println(smsbuffer);
       break;
+    case DISCONNECTED:
+      Serial.println("Disconnected");
+      break;
+    default:
+      Serial.println("unknown event");
+      break;
   }
 }
 

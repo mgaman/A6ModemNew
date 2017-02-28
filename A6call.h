@@ -7,7 +7,7 @@
 class A6CALL
 {
 	public:
-		enum ephoneEvent {SOUNDER,CALL,SMS_ARRIVED};
+		enum ephoneEvent {SOUNDER,CALL,SMS_ARRIVED,DISCONNECTED};
 		A6CALL(A6GPRS& a6gprs);
 		~A6CALL();
 		// callbacks

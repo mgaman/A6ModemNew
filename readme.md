@@ -76,8 +76,10 @@ dialling in, call answwer and call disconnect.</li>
 </ul>
 <h2>Open Issues</h2>
 <ul>
-<li>Incoming block from Broker may contain more than 1 command. At the moment only the first command is processed.
+<li>Incoming block from MQTT Broker may contain more than 1 command. At the moment only the first command is processed.
 This typically happens when starting a new session releases of backlog of retained or uncompleted QOS-1/QOS-2 messages.</li>
 <li>The standard allows for subscribing to more than 1 topic per packet identifier. Currently I only support 1 topic per packet ID</li>
 <li>The MQTT example for QOS-1/QOS-2 does not have a strategy for repeating messages that were not acknowledged/completed.</li>
+<li>Phone support needs phonebook control</li>
+<li>Autoanswer does not work</li>
 </ul>

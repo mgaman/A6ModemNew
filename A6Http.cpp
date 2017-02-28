@@ -44,7 +44,7 @@ void A6HTTP::Parse(byte *rawData,unsigned length)
 {
 	if (length == 1)
 		return;	// single trailing LF
-	rawData[length] = 0;
+//	rawData[length] = 0;
 	if (strncmp((char *)rawData,"+CGREG",6) == 0)
 	{		
 	}

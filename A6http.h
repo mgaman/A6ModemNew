@@ -9,7 +9,7 @@ class A6HTTP
 	bool get(char[]);
 	bool get(char[],char[]);
 	bool post(char[],char[],char[]);
-	void OnDataReceived(char[],unsigned);
+	void OnDataReceived(byte[],unsigned);
     void Parse(byte[],unsigned);
 	unsigned urlencode(char [], char []);
   private:
